@@ -1,0 +1,231 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Jogo do Dino</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 800,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 350 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+// Declarando variáveis
+var player;
+var morango;
+var platforms;
+var cursors;
+var pontos = 0;
+var gameOver = false;
+var placar;
+
+// Iniciando jogo como objeto/instância da classe Phaser.Game passando parâmetro 'config'
+var game = new Phaser.Game(config);
+
+function preload () {
+    // Carregando os assets do jogo e o spritesheet do personagem
+    this.load.image('background', 'assets/gray.png');
+    this.load.image('bloco', 'assets/bloco.png');
+    this.load.spritesheet('morango', 'assets/morango.png', { frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('dino', 'assets/dino.png', { frameWidth: 24, frameHeight: 24 });
+}
+
+function create () {
+    // Adicionando a imagem do fundo
+    this.add.image(400, 400, 'background');
+
+    // Adicionando as plataformas como grupo estático
+    platforms = this.physics.add.staticGroup();
+
+    // Construindo o cenário com obstáculos
+    // Construindo o chão do jogo
+    platforms.create(0, 600, 'bloco')
+    platforms.create(45, 600, 'bloco')
+    platforms.create(90, 600, 'bloco')
+    platforms.create(135, 600, 'bloco')
+    platforms.create(180, 600, 'bloco')
+    platforms.create(225, 600, 'bloco')
+    platforms.create(270, 600, 'bloco')
+    platforms.create(315, 600, 'bloco')
+    platforms.create(360, 600, 'bloco')
+    platforms.create(405, 600, 'bloco')
+    platforms.create(450, 600, 'bloco')
+    platforms.create(495, 600, 'bloco')
+    platforms.create(540, 600, 'bloco')
+    platforms.create(585, 600, 'bloco')
+
+    // Plataformas superiores
+    platforms.create(0, 400, 'bloco')
+    platforms.create(45, 400, 'bloco')
+    platforms.create(90, 400, 'bloco')
+    platforms.create(135, 400, 'bloco')
+    platforms.create(180, 400, 'bloco')
+    platforms.create(225, 400, 'bloco')
+    platforms.create(270, 400, 'bloco')
+
+    platforms.create(0, 200, 'bloco')
+    platforms.create(45, 200, 'bloco')
+    platforms.create(90, 200, 'bloco')
+    platforms.create(135, 200, 'bloco')
+    platforms.create(180, 200, 'bloco')
+    platforms.create(225, 200, 'bloco')
+    platforms.create(270, 200, 'bloco')
+
+    // Criando os blocos avulsos
+    platforms.create(400, 500, 'bloco')
+    platforms.create(400, 300, 'bloco')
+    platforms.create(400, 100, 'bloco')
+
+    // Construindo plataforma final
+    platforms.create(445, 100, 'bloco')
+    platforms.create(490, 100, 'bloco')
+    platforms.create(535, 100, 'bloco')
+    platforms.create(580, 100, 'bloco')
+    platforms.create(625, 100, 'bloco')
+
+    platforms.create(625, 100, 'bloco')
+    platforms.create(625, 145, 'bloco')
+    platforms.create(625, 190, 'bloco')
+    platforms.create(625, 235, 'bloco')
+    platforms.create(625, 280, 'bloco')
+    platforms.create(625, 325, 'bloco')
+    platforms.create(625, 370, 'bloco')
+    platforms.create(625, 415, 'bloco')
+    platforms.create(625, 460, 'bloco')
+    platforms.create(625, 505, 'bloco')
+    platforms.create(625, 550, 'bloco')
+
+    platforms.create(625, 595, 'bloco')
+    platforms.create(670, 595, 'bloco')
+    platforms.create(715, 595, 'bloco')
+    platforms.create(760, 595, 'bloco')
+    platforms.create(805, 595, 'bloco')
+
+
+    // Adicionando o personagem
+    player = this.physics.add.sprite(100, 450, 'dino');
+    player.setScale(2)
+
+   // Limitando o personagem aos limites do mundo e configurando o Bounce
+    player.setBounce(0.1);
+    player.setCollideWorldBounds(true);
+
+    // Criando as animações do personagem
+    this.anims.create({
+        key: 'parado',
+        frames: this.anims.generateFrameNumbers('dino', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'pulando',
+        frames: [ { key: 'dino', frame: 11 } ],
+        frameRate: 20,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'direita',
+        frames: this.anims.generateFrameNumbers('dino', { start: 4, end: 10 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'morangoPulando',
+        frames: this.anims.generateFrameNumbers('morango', { start: 0, end: 16 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+
+    // Criando as entradas do teclado como as setinhas
+    cursors = this.input.keyboard.createCursorKeys();
+
+    // Adicionando os morangos
+    morango = this.physics.add.group({
+        key: 'morango',
+        repeat: 5,
+        setXY: { x: 90, y: 0, stepX:100 }
+    });
+
+
+    // Adicionando placar no jogo
+    placar = this.add.text(20, 20, 'Morangos: 0', { fontSize: '32px', fill: '#000' });
+
+    // Criando colisão entre a plataforma e o jogador e com os morangos
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(morango, platforms);
+
+    // Configurando a sobreposição do jogador sobre o morango
+    this.physics.add.overlap(player, morango, coletarMorango, null, this);
+}
+
+function update () {
+
+    // Configurando as mecânicas de movimentação do jogo junto com as animações do personagem
+    if (cursors.left.isDown)
+    {
+        player.setVelocityX(-160);
+
+        player.anims.play('direita', true);
+        player.setFlipX(true); 
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setVelocityX(160);
+
+        player.anims.play('direita', true);
+        player.setFlipX(false);
+    }
+    else
+    {
+        player.setVelocityX(0);
+        player.anims.play('parado');
+    }
+
+    if (cursors.up.isDown && player.body.touching.down && !cursors.right.isDown && !cursors.left.isDown)
+    {
+        player.anims.play('pulando', true);
+        player.setVelocityY(-330);
+    }
+    
+    else if(cursors.up.isDown && player.body.touching.down) {
+        player.setVelocityY(-330);
+    }
+}
+
+// Declarando função para sobreposição do morango pelo jogador
+function coletarMorango (player, morango)
+{
+    morango.disableBody(true, true);
+    pontos += 10;
+    placar.setText('Morangos: ' + pontos);
+}
+</script>
+
+</body>
+</html>
